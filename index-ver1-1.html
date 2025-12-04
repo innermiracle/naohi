@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数霊鑑定システム（表示修正版）</title>
+<title>数霊鑑定システム（最終版）</title>
 <style>
-    body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 20px; color: #333; margin: 0; }
+    body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 20px; color: #333; }
     .container { background: #fff; max-width: 950px; margin: 0 auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
     h1 { font-size: 24px; margin-bottom: 20px; color: #2c3e50; }
     
@@ -33,33 +33,33 @@
     /* 数字セル */
     .num-cell { font-size: 30px; color: #2c3e50; }
     /* 干支・空白セル */
-    .eto-cell { font-size: 16px; color: #555; }
+    .eto-cell { font-size: 14px; color: #888; }
     .corner-cell { background: #f9f9f9; }
 
-    /* マーク設定（中央揃え統一） */
-    
-    /* 干支マーク（○）: 文字を囲む青い円 */
+    /* マーク設定 */
     .mark-eto { 
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        border: 2px solid #2980b9; border-radius: 50%; 
-        width: 32px; height: 32px; 
-        background: transparent; /* 文字が見えるように透明 */
-        z-index: 1;
+        position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+        color: #2980b9; border: 2px solid #2980b9; background: #fff;
+        border-radius: 50%; width: 20px; height: 20px; 
+        font-size: 14px; line-height: 20px; z-index: 10;
     }
     
-    /* 破壊マーク（✕）: 赤い太字のバツ */
+    /* 破壊数（✕）の統一スタイル */
     .mark-hakai { 
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        position: absolute; 
         color: #e74c3c; 
-        font-size: 36px; /* 大きくハッキリ */
+        font-size: 28px; /* 大きさを統一 */
         font-weight: 900;
-        z-index: 2; 
+        z-index: 10; 
         line-height: 1;
-        opacity: 0.8;
+        text-shadow: 1px 1px 0 #fff;
     }
-    
-    /* 数字の赤字 */
-    .is-hakai-num { color: #e74c3c; }
+    /* 干支の上の✕ */
+    .pos-zod { bottom: -10px; left: 50%; transform: translateX(-50%); }
+    /* 隅の空白の✕ */
+    .pos-corner { top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; }
+
+    .is-hakai-num { color: #e74c3c; } /* 数字も赤く */
 
     .footer { margin-top: 40px; font-size: 11px; color: #ccc; }
 </style>
@@ -70,7 +70,7 @@
     <h1>数霊鑑定システム</h1>
     <div class="input-area">
         <label>生年月日 </label>
-        <input type="date" id="bd" min="1907-01-01" max="2035-12-31">
+        <input type="date" id="bd" min="1907-01-01" max="2033-12-31">
         <button onclick="app.calc()">鑑定</button>
     </div>
 
@@ -83,37 +83,44 @@
             <div class="board-wrapper"><div class="board-label">【月盤】</div><div id="bM" class="grid"></div></div>
             <div class="board-wrapper"><div class="board-label">【日盤】</div><div id="bD" class="grid"></div></div>
         </div>
-        <p style="font-size:12px; color:#888; margin-top:20px;">
-            <span style="color:#2980b9; font-weight:bold; border:2px solid #2980b9; border-radius:50%; display:inline-block; width:12px; height:12px;"></span>=干支　
-            <span style="color:#e74c3c; font-weight:bold; font-size:16px;">✕</span>=破壊
-        </p>
+        <p style="font-size:12px; color:#888; margin-top:20px;">○=干支　✕=破壊</p>
     </div>
 </div>
 
 <script>
 const app = {
-    // 節入りデータ (1907-2033)
+    // 1907-2033年の節入りデータ（完全圧縮版）
     sd: "757677899998757667889988657677899998757677899998757677899998757667889988657677899998657677899998757677899998757667889988657677899998657677899998757677899998756566788987646566888988656566888988657667899988756566788887646566888988646667889988656667889988656566788887646566888987646566888988656667889988656666788887646566888987646566888988656667888988656566788887646566788987646566888988656667888988756566788987646566788987646566888987656566888988656566788887646566888988656566788898656667889988656566788987646566778898646566788898657667889988656556778977646566788988646566778898657667889988656566778887646566788988646566888988646667889988656556778877646566788988646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877",
 
+    // 定義
     ZOD: ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'],
     NUMS: {1:'①',2:'②',3:'③',4:'④',5:'⑤',6:'⑥',7:'⑦',8:'⑧',9:'⑨'},
     
-    // 干支の対冲（歳破）
+    // 干支の対冲（歳破用: ピンポイント）
     ZOD_OPP: {'子':'午','丑':'未','寅':'申','卯':'酉','辰':'戌','巳':'亥','午':'子','未':'丑','申':'寅','酉':'卯','戌':'辰','亥':'巳'},
 
     // 5x5 Grid Indices (0-24)
+    // 0  1  2  3  4
+    // 5  6  7  8  9
+    // 10 11 12 13 14
+    // 15 16 17 18 19
+    // 20 21 22 23 24
     OUTER: {'巳':1,'午':2,'未':3, '申':9,'酉':14,'戌':19, '亥':23,'子':22,'丑':21, '寅':15,'卯':10,'辰':5},
     CORNERS: {0:'SE', 4:'SW', 20:'NE', 24:'NW'}, 
     INN_MAP: [6, 7, 8, 11, 12, 13, 16, 17, 18],
 
-    // 3x3 飛泊順
+    // 3x3 飛泊順 (Center -> ...)
     BOARD_ORDER: [4, 8, 5, 6, 1, 7, 2, 3, 0],
     
-    // 対冲マップ
+    // 対冲マップ (0<->8)
     OPP: {0:8, 8:0, 1:7, 7:1, 2:6, 6:2, 3:5, 5:3},
     
-    // 方位(0-8)とコーナーの対応
-    POS_TO_CORNER: { 0:0, 2:4, 6:20, 8:24 },
+    // 5の対冲が「角(0,2,6,8)」に来た時、5x5の「四隅(0,4,20,24)」に対応させるマップ
+    // 3x3 Pos: 0(SE) -> 5x5 Idx: 0
+    // 3x3 Pos: 2(SW) -> 5x5 Idx: 4
+    // 3x3 Pos: 6(NE) -> 5x5 Idx: 20
+    // 3x3 Pos: 8(NW) -> 5x5 Idx: 24
+    CORNER_MAP: {0:0, 2:4, 6:20, 8:24},
 
     sumDigits: function(n){
         let s=n; while(s>9) s=String(s).split('').reduce((a,b)=>a+parseInt(b),0); return s;
@@ -124,7 +131,7 @@ const app = {
         if(!inp) return;
         const [y,m,d] = inp.split('-').map(Number);
         
-        if(y<1907 || y>2033) { alert("1907-2033の範囲で入力してください"); return; }
+        if(y<1907 || y>2033) { alert("1907-2033の範囲で"); return; }
         const idx = (y - 1907) * 12 + (m - 1);
         const setsu = parseInt(this.sd.charAt(idx));
         
@@ -134,9 +141,7 @@ const app = {
         const yN = this.sumDigits(sY);
         let yZ = (sY - 1900) % 12; if(yZ<0) yZ+=12;
         
-        // 月計算 (年数×3 + 月数 - 2)
-        let mN = (yN * 3 + sM - 2) % 9; 
-        if(mN <= 0) mN += 9;
+        let mN = (yN + sM + 7) % 9; if(mN==0) mN=9;
         const mZ = sM % 12;
         
         const days = Math.round((Date.UTC(y,m-1,d)-Date.UTC(1945,0,1))/86400000);
@@ -162,11 +167,11 @@ const app = {
         let c = cNum;
         for(let i=0; i<9; i++) { nums[this.BOARD_ORDER[i]]=c; c=(c%9)+1; }
         
-        // 破壊数の特定
-        const hakaiVals = new Set();
+        // 破壊の特定
+        const hakaiVals = new Set(); 
         const oppZodiac = this.ZOD_OPP[zName]; 
         
-        // 5の対冲
+        // 5の対冲 (位置0-8)
         let opp5Pos = null;
         const pos5 = nums.indexOf(5);
         if(this.OPP[pos5] != null) {
@@ -174,7 +179,8 @@ const app = {
             hakaiVals.add(nums[opp5Pos]);
         }
         
-        // 干支の対冲
+        // 干支の対冲 (数字特定用)
+        // 干支名 -> 3x3位置
         const zPosMap = {'子':7, '丑':6, '寅':6, '卯':3, '辰':0, '巳':0, '午':1, '未':2, '申':2, '酉':5, '戌':8, '亥':8};
         const oppZPos = zPosMap[oppZodiac];
         if(oppZPos != null) hakaiVals.add(nums[oppZPos]);
@@ -189,18 +195,17 @@ const app = {
                 if(this.OUTER[k]===i) {
                     div.className += ' eto-cell';
                     div.innerText = k;
+                    // 干支マーク
+                    if(k === zName) div.innerHTML += '<span class="mark-eto">○</span>';
+                    // 歳破マーク (ピンポイント)
+                    if(k === oppZodiac) div.innerHTML += '<span class="mark-hakai mark-hakai-zod">✕</span>';
                     
-                    // 干支マーク (青○)
-                    if(k === zName) div.innerHTML += '<span class="mark-eto"></span>';
-                    
-                    // 歳破マーク (赤✕)
-                    if(k === oppZodiac) div.innerHTML += '<span class="mark-hakai">✕</span>';
-                    
-                    // 暗剣殺（十字方向）
+                    // 暗剣殺が十字に来た場合 (その方位の干支に✕をつける)
+                    // opp5Pos: 1(S)->午, 3(E)->卯, 5(W)->酉, 7(N)->子
                     const crossMap = {1:['午'], 3:['卯'], 5:['酉'], 7:['子']};
                     if(opp5Pos !== null && crossMap[opp5Pos]) {
                         if(crossMap[opp5Pos].includes(k)) {
-                             div.innerHTML += '<span class="mark-hakai">✕</span>';
+                             div.innerHTML += '<span class="mark-hakai mark-hakai-zod">✕</span>';
                         }
                     }
                 }
@@ -209,8 +214,9 @@ const app = {
             // B. 四隅の空白セル (暗剣殺)
             if(this.CORNERS[i]) {
                 div.className += ' corner-cell';
-                if(opp5Pos !== null && this.POS_TO_CORNER[opp5Pos] === i) {
-                    div.innerHTML += '<span class="mark-hakai">✕</span>';
+                // opp5Posが隅(0,2,6,8)の場合、対応する空白セルに✕
+                if(opp5Pos !== null && this.CORNER_MAP[opp5Pos] === i) {
+                    div.innerHTML += '<span class="mark-hakai mark-hakai-corner">✕</span>';
                 }
             }
 
