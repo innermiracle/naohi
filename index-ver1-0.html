@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>田上数霊学 命数計算（節入り対応）</title>
+<style>
+  body { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+  h1 { font-size: 20px; margin-bottom: 5px; color: #444; }
+  .subtitle { font-size: 13px; color: #777; margin-bottom: 25px; }
+  
+  input[type="date"] { font-size: 18px; padding: 12px; width: 80%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; }
+  
+  button { background-color: #000; color: white; border: none; padding: 14px 28px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: opacity 0.3s; }
+  button:hover { opacity: 0.8; }
+
+  #result { margin-top: 30px; padding: 20px; background-color: #fff; border: 2px solid #000; border-radius: 10px; display: none; }
+  .result-label { font-size: 12px; color: #666; margin-bottom: 5px; text-align: left; }
+  
+  .formula-result { 
+    font-size: 32px; 
+    font-weight: bold; 
+    color: #000; 
+    line-height: 1.4; 
+    letter-spacing: 2px;
+    word-break: break-all;
+  }
+  
+  .senzai { color: #d63031; }
+  .date-display { font-size: 14px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; color: #555; }
+  .note { font-size: 11px; color: #888; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>田上数霊学 命数計算</h1>
+  <p class="subtitle">1945年起点 / 節入り自動計算</p>
+  
+  <input type="date" id="dateInput">
+  <br>
+  <button onclick="calculateAll()">鑑定する</button>
+
+  <div id="result">
+    <div class="result-label">命式</div>
+    <div class="formula-result" id="mainOutput"></div>
+    <div class="date-display" id="dateDisplay"></div>
+    <div class="note" id="setsuiriInfo"></div>
+  </div>
+</div>
+
+<script>
+  const circleNums = "①②③④⑤⑥⑦⑧⑨";
+  const etoList = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+
+  // 節入り日の簡易計算定数 (1900-2099年用近似式)
+  // 小寒, 立春, 啓蟄, 清明, 立夏, 芒種, 小暑, 立秋, 白露, 寒露, 立冬, 大雪
+  const solarTermCoeff = [6.11, 4.6295, 6.3826, 5.59, 6.318, 6.5, 8.0, 8.4, 8.5, 9.1, 8.2, 7.9];
+
+  // 指定年月の節入り日を返す関数
+  function getSetsuiriDay(year, month) {
+    // monthは1〜12。配列インデックスはmonth-1
+    // 近似式: int(coeff + 0.242194 * (y - 1900) - int((y - 1900)/4))
+    const coeff = solarTermCoeff[month - 1];
+    const y = year; 
+    const termDay = Math.floor(coeff + 0.242194 * (y - 1900) - Math.floor((y - 1900) / 4));
+    return termDay;
+  }
+
+  // 1桁になるまで足し算
+  function reduceToSingleDigit(num) {
+    if (num === 0) return 9;
+    let n = num % 9;
+    return (n === 0) ? 9 : n;
+  }
+
+  function calculateAll() {
+    const inputVal = document.getElementById("dateInput").value;
+    if (!inputVal) {
+      alert("日付を入力してください");
+      return;
+    }
+
+    const targetDate = new Date(inputVal);
+    targetDate.setHours(0, 0, 0, 0); 
+
+    const rawYear = targetDate.getFullYear();
+    const rawMonth = targetDate.getMonth() + 1;
+    const rawDay = targetDate.getDate();
+
+    // ■ 節入り判定による年月の補正
+    // その月の節入り日を取得
+    const setsuiriDay = getSetsuiriDay(rawYear, rawMonth);
+    
+    let calcYear = rawYear;
+    let calcMonth = rawMonth;
+
+    // 生まれた日が節入り前なら、前の月として扱う
+    let isBeforeSetsuiri = false;
+    if (rawDay < setsuiriDay) {
+      isBeforeSetsuiri = true;
+      calcMonth = rawMonth - 1;
+      if (calcMonth < 1) {
+        calcMonth = 12;
+        calcYear = rawYear - 1;
+      }
+    }
+
+    // ■ 年盤の計算 (立春基準)
+    // 2月で節入り前(〜2/3頃)なら、さらに前年扱いになるかどうかの判定は
+    // 上記ロジック(2/3ならcalcMonth=1)ですでに前年(1月)扱いや、
+    // あるいは1月生まれなら前年12月扱いになっているので、
+    // calcYearを使って計算すればOK。
+    // ※ただし厳密な立春(2月4日頃)チェックが必要
+    // 上のロジックで「2月4日が節入り日」で「2月3日生まれ」なら
+    // calcMonth=1になる。
+    // 「1月」や「12月(前年)」扱いになった場合、年盤も前年を使う。
+    
+    // 東洋暦の「年」の切り替わりは2月の節入り(立春)
+    // calcMonthが1なら、まだ前年の年盤
+    // calcMonthが12なら、もちろん前年の年盤
+    let zodiacYear = calcYear;
+    if (calcMonth === 1 || (rawMonth === 2 && rawDay < getSetsuiriDay(rawYear, 2))) {
+       // まだ立春前なので年は前年
+       // ただしcalcYearはすでに前年になっている可能性もあるので注意深く
+       // シンプルに: 「2月の節入り」より前なら year-1 とする
+       const risshunDay = getSetsuiriDay(rawYear, 2);
+       // 現在日時が立春より前か？
+       // (月が1) または (月が2 かつ 日が立春前)
+       if (rawMonth < 2 || (rawMonth === 2 && rawDay < risshunDay)) {
+         zodiacYear = rawYear - 1;
+       } else {
+         zodiacYear = rawYear;
+       }
+    } else {
+       zodiacYear = rawYear;
+    }
+
+    // --- 【年盤】 ---
+    // 数霊: 西暦の和
+    let yearKazutama = reduceToSingleDigit(zodiacYear);
+    
+    // 干支: 1953=巳. (zodiacYear - 2020) % 12 -> 2020=子
+    let yearEtoIndex = (zodiacYear - 2020) % 12;
+    if (yearEtoIndex < 0) yearEtoIndex += 12;
+    let yearEto = etoList[yearEtoIndex];
+
+    // --- 【月盤】 ---
+    // 月盤は「節月」で見る。
+    // 基準: 1945年1月(丑) を起点とするが、東洋暦では「2月(寅)」が正月の基準になることが多い。
+    // 先生の例: 1953/4/22(辰月) -> ②
+    // ここは数霊のロジックで「連続循環」させる。
+    // 1945年1月(丑)をベースとして、calcMonth(補正後月)までの月数を計算。
+    // ※注意: calcMonthは節入り判定後の月。
+    
+    // 1945年の立春(2月)からの月数差分 + 1945年1月の分
+    // シンプルに: (補正後年 - 1945)*12 + (補正後月 - 1)
+    // これで1945/1なら0になる。
+    // 1945/1 は ②丑 と仮定 (1953/4 ②辰から逆算)
+    
+    const diffMonths = (zodiacYear - 1945) * 12 + (calcMonth - 1);
+    
+    // 月数霊: 起点②(1945/1) + 差分
+    // ※ただし年の変わり目でリセットされる流派もあるが、先生は「連続」を示唆されているため
+    // 1953/4/22が②になるか確認:
+    // 1945->1953: 8年。 8*12 = 96ヶ月。
+    // 1月->4月: +3ヶ月。計99ヶ月。
+    // 2 + 99 = 101 -> 1+0+1=2。 合致します！
+    
+    let monthKazutama = reduceToSingleDigit(2 + diffMonths);
+
+    // 月干支: 起点丑(1) + 差分
+    let monthEtoIndex = (1 + diffMonths) % 12;
+    if (monthEtoIndex < 0) monthEtoIndex += 12;
+    let monthEto = etoList[monthEtoIndex];
+
+
+    // --- 【日盤】 ---
+    // 日盤は節入りに関係なく、1945/1/1からの絶対日数で計算（時間即命）
+    const baseDate = new Date("1945-01-01");
+    baseDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = targetDate - baseDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // 日数霊: 起点① + 差分
+    let dayKazutama = reduceToSingleDigit(1 + diffDays);
+
+    // 日干支: 起点午(6) + 差分
+    let dayEtoIndex = (6 + diffDays) % 12;
+    if (dayEtoIndex < 0) dayEtoIndex += 12;
+    let dayEto = etoList[dayEtoIndex];
+
+
+    // --- 【潜在命数】 ---
+    let senzaiNum = reduceToSingleDigit(yearKazutama + monthKazutama + dayKazutama);
+
+
+    // --- 表示 ---
+    const resultString = 
+      circleNums[yearKazutama - 1] + yearEto + 
+      circleNums[monthKazutama - 1] + monthEto + 
+      circleNums[dayKazutama - 1] + dayEto + 
+      "<span class='senzai'>/" + circleNums[senzaiNum - 1] + "</span>";
+
+    document.getElementById("mainOutput").innerHTML = resultString;
+    
+    // 日付表示と節入り情報
+    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+    let infoText = "判定: " + calcMonth + "月節 (節入日: " + rawMonth + "月" + setsuiriDay + "日)";
+    if (isBeforeSetsuiri) {
+        infoText += " ※節入り前のため前月扱い";
+    }
+
+    document.getElementById("dateDisplay").innerText = targetDate.toLocaleDateString('ja-JP', options);
+    document.getElementById("setsuiriInfo").innerText = infoText;
+
+    document.getElementById("result").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
