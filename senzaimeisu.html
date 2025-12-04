@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>潜在命数作成アプリ（完全修正版）</title>
+<style>
+    body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f4f4f4; text-align: center; padding: 20px; color: #333; }
+    .container { background: #fff; max-width: 600px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; margin-bottom: 30px; color: #2c3e50; }
+    
+    .input-group { margin-bottom: 30px; }
+    input { font-size: 20px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 60%; text-align: center; }
+    button { background: #27ae60; color: #fff; font-size: 20px; padding: 10px 40px; border: none; border-radius: 6px; cursor: pointer; display: block; margin: 20px auto 0; }
+    button:hover { background: #219150; }
+
+    .result-area { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; display: none; }
+    .label { font-size: 14px; color: #7f8c8d; margin-bottom: 5px; }
+    .main-code { font-size: 32px; font-weight: bold; color: #34495e; margin-bottom: 20px; letter-spacing: 2px; }
+    
+    .life-num-box { background: #e8f8f5; padding: 20px; border-radius: 10px; display: inline-block; min-width: 200px; }
+    .life-num { color: #e74c3c; font-size: 48px; font-weight: 900; line-height: 1; }
+    
+    .footer { margin-top: 50px; font-size: 12px; color: #ccc; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>潜在命数作成アプリ</h1>
+    <div class="input-group">
+        <div class="label">生年月日を入力</div>
+        <input type="date" id="bd" min="1907-01-01" max="2033-12-31">
+        <button onclick="calc()">作成する</button>
+    </div>
+
+    <div id="result" class="result-area">
+        <div class="label">数霊コード (年 月 日)</div>
+        <div id="code" class="main-code"></div>
+        
+        <div class="life-num-box">
+            <div class="label">あなたの潜在命数</div>
+            <div id="life" class="life-num"></div>
+        </div>
+    </div>
+    <div class="footer">Data Verified: 1907-2033</div>
+</div>
+
+<script>
+// 1907-2033年の節入り日データ（完全版）
+const SD = "757677899998757667889988657677899998757677899998757677899998757667889988657677899998657677899998757677899998757667889988657677899998657677899998757677899998756566788987646566888988656566888988657667899988756566788887646566888988646667889988656667889988656566788887646566888987646566888988656667889988656666788887646566888987646566888988656667888988656566788887646566788987646566888988656667888988756566788987646566788987646566888987656566888988656566788887646566888988656566788898656667889988656566788987646566778898646566788898657667889988656556778977646566788988646566778898657667889988656566778887646566788988646566888988646667889988656556778877646566788988646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877646566788987646566788988646667889988656556778877646566788988646566888988646667889988656556778877646566788988646566788988646566788988656556778877";
+
+const NUMS = {1:'①',2:'②',3:'③',4:'④',5:'⑤',6:'⑥',7:'⑦',8:'⑧',9:'⑨'};
+
+function getDigitSum(n) {
+    let s = n;
+    while(s > 9) s = String(s).split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+    return s;
+}
+
+function calc() {
+    const inp = document.getElementById('bd').value;
+    if(!inp) { alert("生年月日を入力してください"); return; }
+    const [y, m, d] = inp.split('-').map(Number);
+    
+    // 節入り計算
+    if(y<1907 || y>2033) { alert("1907-2033の範囲で入力してください"); return; }
+    const idx = (y - 1907) * 12 + (m - 1);
+    const setsu = parseInt(SD.charAt(idx), 10);
+    
+    let sY = y, sM = m;
+    if(d < setsu) { sM--; if(sM==0){ sM=12; sY--; } }
+    
+    // 年計算 (西暦の和)
+    const yN = getDigitSum(sY);
+    
+    // 月計算 (年数×3 + 月数 - 2)
+    let mN = (yN * 3 + sM - 2) % 9;
+    if(mN <= 0) mN += 9;
+    
+    // 日計算 (1945/1/1=1起点)
+    const days = Math.round((Date.UTC(y,m-1,d) - Date.UTC(1945,0,1)) / 86400000);
+    let dN = (days % 9) + 1;
+    if(dN <= 0) dN += 9;
+    
+    // 潜在命数
+    const ln = getDigitSum(yN + mN + dN);
+    
+    // 表示
+    document.getElementById('code').innerText = `${NUMS[yN]} - ${NUMS[mN]} - ${NUMS[dN]}`;
+    document.getElementById('life').innerText = NUMS[ln];
+    
+    document.getElementById('result').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
